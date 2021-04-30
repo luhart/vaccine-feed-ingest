@@ -299,6 +299,67 @@ def load_to_vial(
 
 
 @cli.command()
+@_sites_argument()
+@_state_option()
+@_output_dir_option()
+@_dry_run_option()
+@_vial_server_option()
+@_vial_apikey_option()
+@_match_option()
+@_create_option()
+@_candidate_distance_option()
+def pipeline(
+    sites: Optional[Sequence[str]],
+    state: Optional[str],
+    output_dir: pathlib.Path,
+    vial_server: str,
+    vial_apikey: str,
+    enable_match: bool,
+    enable_create: bool,
+    candidate_distance: float,
+) -> None:
+    """Run all stages in succession for specified sites."""
+    timestamp = _generate_run_timestamp()
+    site_dirs = site.get_site_dirs(state, sites)
+
+    sites_to_load = []
+
+    for site_dir in site_dirs:
+        fetch_success = ingest.run_fetch(site_dir, output_dir, timestamp)
+
+        if not fetch_success:
+            continue
+
+        parse_success = ingest.run_parse(site_dir, output_dir, timestamp)
+
+        if not parse_success:
+            continue
+
+        normalize_success = ingest.run_normalize(site_dir, output_dir, timestamp)
+
+        if not normalize_success:
+            continue
+
+        enrich_success = ingest.run_enrich(site_dir, output_dir, timestamp)
+
+        if not enrich_success:
+            continue
+
+        sites_to_load.append(site_dir)
+
+    if sites_to_load:
+        load.load_sites_to_vial(
+            sites_to_load,
+            output_dir,
+            vial_server,
+            vial_apikey,
+            enable_match,
+            enable_create,
+            candidate_distance,
+        )
+
+
+@cli.command()
 def version() -> None:
     """Get the library version."""
     click.echo(click.style("0.1.0", bold=True))
