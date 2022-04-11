@@ -49,7 +49,7 @@ placekey = "^0.0.11"
 pygeocodio = "^1.0.0"
 
 [tool.poetry.dev-dependencies]
-tox = "^3.23.1"
+tox = "^3.25.0"
 
 [tool.poetry.extras]
 lint = ["flake8", "black", "mypy", "isort"]
